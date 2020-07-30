@@ -4,6 +4,7 @@ import {createStackNavigator} from 'react-navigation-stack';
 
 import webService from './src/WebService';
 import api from './src/ListaFilmes';
+import firebase from './src/Firebase';
 
 
 const AppNavigator = createStackNavigator ({
@@ -12,6 +13,9 @@ const AppNavigator = createStackNavigator ({
   },
   api:{
     screen:api
+  },
+  Firebase:{
+    screen:firebase
   }
 },{
   initialRouteName:'api',

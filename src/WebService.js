@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {View, StyleSheet, Text, FlatList, TextInput, Button} from 'react-native';
 
 import Item from './item';
+import Firebase from './Firebase';
 
 export default class webService extends Component{
 
@@ -77,6 +78,8 @@ export default class webService extends Component{
 					renderItem={({item}) => <Item data={item} url={this.url} loadFunction={this.loadLista} />}
 					keyExtractor={(item, index)=>item.id}
 				/>
+
+				<Button title="Ir para a tela do Firebase" onPress={()=>this.props.navigation.navigate('Firebase')} />
 			</View>
 		);
 	}

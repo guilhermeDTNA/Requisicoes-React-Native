@@ -14,7 +14,10 @@ export default class PrimeiroProjeto extends Component{
 			idadeInput:'',
 			listaUsuarios: [],
 			email: '',
-			senha: ''
+			senha: '',
+			uid: '',
+			addItemTxt: '',
+			lista: ''
 		};
 
 		//let firebaseConfig = Conexao.viewDetails().con;
@@ -37,12 +40,51 @@ export default class PrimeiroProjeto extends Component{
   this.cadastrar = this.cadastrar.bind(this);
   this.logar = this.logar.bind(this);
   this.sair = this.sair.bind(this);
+  this.add = this.add.bind(this);
 
   //firebase.auth().signOut();
 
+/*
   firebase.auth().onAuthStateChanged((user)=>{
   	if(user){
-  		alert("Fez login com sucesso!");
+  		firebase.database().ref('usuarios').child(user.uid).set({
+  			nome:this.state.nome
+  		})
+  		
+  		alert("Usuário criado com sucesso!");
+  	} 
+  });
+  */
+
+  firebase.auth().onAuthStateChanged((user)=>{
+  	if(user){
+
+  		let state = this.state;
+  		state.uid = user.uid;
+  		this.setState(state);
+
+  		firebase.database().ref('usuarios').child(user.uid).once('value')
+  		.then((snapshot)=>{
+  			let nome = snapshot.val().nome;
+
+  			alert("Seja bem-vindo, "+nome);
+  		});
+
+  		firebase.database().ref('todo').child(user.uid).on('value', (snapshot)=>{
+  			let state = this.state;
+  			state.lista = [];
+
+  			snapshot.forEach((childItem)=>{
+  				state.lista.push({
+  					titulo:childItem.val().titulo,
+  					key: childItem.key
+  				});
+  			});
+
+  			this.setState(state);
+  		});
+  		
+  		//alert("Usuário criado com sucesso!");
   	} 
   });
 
@@ -88,7 +130,7 @@ cadastrar(){
 		this.state.senha
 		).catch((error)=>{
 
-			alert(error.code);
+			//alert(error.code);
 			if(error.code == 'auth/weak-password'){
 				alert("Sua senha deve ter ao menos 6 caracteres");
 			} else if(error.code == "auth/email-already-in-use"){
@@ -121,6 +163,18 @@ cadastrar(){
 
 		sair(){
 			firebase.auth().signOut();
+			alert ("O usuário foi deslogado");
+		}
+
+		add(){
+			if(this.state.uid != '' && this.state.addItemTxt != ''){
+				let todo = firebase.database().ref('todo').child(this.state.uid);
+				let chave = todo.push().key;
+
+				todo.child(chave).set({
+					titulo:this.state.addItemTxt
+				});
+			}
 		}
 
 		render(){
@@ -151,6 +205,10 @@ cadastrar(){
 				<Text></Text>
 
 				<Text>Cadastrar usuário:</Text>
+
+				<Text>Nome:</Text>
+				<TextInput onChangeText={(nome)=>this.setState({nome})} style={styles.input} />
+
 				<Text>E-mail:</Text>
 				<TextInput onChangeText={(email)=>this.setState({email})} style={styles.input} />
 
@@ -171,6 +229,16 @@ cadastrar(){
 				<TextInput secureTextEntry={true} onChangeText={(senha)=>this.setState({senha})} style={styles.input} />
 
 				<Button title="Logar" onPress={this.logar} /> 
+
+				<View style={styles.addArea}>
+
+				<Text>Adicione um item</Text>
+				<TextInput value={this.state.addItemTxt} onChangeText={(addItemTxt)=>this.setState({addItemTxt})} style={styles.input} />
+				<Button title="Adicionar" onPress={this.add} />
+				</View>
+
+				<FlatList data={this.state.lista} renderItem={({item})=> <Text>{item.titulo}</Text>} style={styles.lista} />
+
 				<Button title="Sair" onPress={this.sair} />
 				</View>
 				</ScrollView>
@@ -191,5 +259,13 @@ cadastrar(){
 		},
 		main:{
 			flex: 1
+		},
+		addArea:{
+			borderWidth: 1,
+			borderColor: '#000000',
+			padding: 5
+		},
+		lista:{
+			margin: 30
 		}
 	});

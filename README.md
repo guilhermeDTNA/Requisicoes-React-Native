@@ -1,8 +1,6 @@
-Projeto Expo que manipula requisições com React Native para fins de estudo.
+<h3>Projeto Expo que manipula requisições com React Native para fins de estudo.</h3>
 
-Após instalar o expo e criar o projeto, basta incluir os arquivos no mesmo e executá-lo com o comando 'expo start'.
-
-Será necessário criar um arquivo dentro do diretório src com o nome: "Conexao.js", que deverá conter a variável de conexão com o projeto no Firebase. O arquivo deve seguir essa estrutura:
+Para executar o projeto, será necessário criar um arquivo dentro do diretório /src com o nome: "Conexao.js", que deverá conter a variável de conexão com o projeto no Firebase. O arquivo deve seguir essa estrutura:
 
 ----------------------------------------------
 import firebase from 'firebase';
@@ -22,5 +20,16 @@ firebase.initializeApp(config);
 ----------------------------------------------
 Comandos para instalação dos pacotes via expo:
 
-expo install firebase react-navigation react-native-gesture-handler react-native-reanimated react-native-screens react-native-safe-area-context @react-native-community/masked-view
-expo install react-navigation-stack
+```console
+
+$ sudo npm install
+
+```
+
+Após instalar os pacotes e criar o projeto, basta incluir os arquivos no mesmo e executá-lo com o comando: 
+
+```console
+
+$ expo start
+
+```

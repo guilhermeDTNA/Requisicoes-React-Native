@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
 import {View, Text, StyleSheet, Button, TextInput, FlatList, ScrollView} from 'react-native';
 
-import firebase from 'firebase';
-import Conexao from './Conexao';
+import firebase from './Conexao';
+
+import SistemaModels from './SistemaModels';
 
 export default class PrimeiroProjeto extends Component{
 
@@ -19,6 +20,9 @@ export default class PrimeiroProjeto extends Component{
 			addItemTxt: '',
 			lista: ''
 		};
+
+		//O ideal é colocar todo o código do firebase em um arquivo separado, chamando só o método dele
+		SistemaModels.sair();
 
 		//let firebaseConfig = Conexao.viewDetails().con;
 
@@ -39,7 +43,7 @@ export default class PrimeiroProjeto extends Component{
   this.inserirUsuario = this.inserirUsuario.bind(this);
   this.cadastrar = this.cadastrar.bind(this);
   this.logar = this.logar.bind(this);
-  this.sair = this.sair.bind(this);
+
   this.add = this.add.bind(this);
 
   //firebase.auth().signOut();
@@ -161,11 +165,6 @@ cadastrar(){
 			});
 		}
 
-		sair(){
-			firebase.auth().signOut();
-			alert ("O usuário foi deslogado");
-		}
-
 		add(){
 			if(this.state.uid != '' && this.state.addItemTxt != ''){
 				let todo = firebase.database().ref('todo').child(this.state.uid);
@@ -239,7 +238,7 @@ cadastrar(){
 
 				<FlatList data={this.state.lista} renderItem={({item})=> <Text>{item.titulo}</Text>} style={styles.lista} />
 
-				<Button title="Sair" onPress={this.sair} />
+				<Button title="Sair" onPress={SistemaModels.sair} />
 				</View>
 				</ScrollView>
 				);

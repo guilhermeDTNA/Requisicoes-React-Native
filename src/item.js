@@ -13,19 +13,7 @@ export default class Item extends Component{
 	}
 
 	excluir(){
-		fetch(this.props.url+'/'+this.props.data.id, {
-			method:'DELETE',
-			headers:{
-				'Accept':'application/json',
-				'Content-Type':'application/json'
-			}
-		})
-
-		.then((r)=>r.json())
-		.then((json)=>{
-			this.props.loadFunction();
-		})
-
+		this.props.onDelete(this.props.data.id);
 	}
 
 	marcar(){
@@ -40,6 +28,10 @@ export default class Item extends Component{
 			done = 'nao';
 		}
 
+		this.setState(state);
+
+		this.props.onUpdate(this.props.data.id, done);
+		/*
 
 		fetch(this.props.url+'/'+this.props.data.id, {
 			method:'PUT',
@@ -56,6 +48,8 @@ export default class Item extends Component{
 		.then((json)=>{})
 
 		this.setState(state);
+
+		*/
 	}
 
 

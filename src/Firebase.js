@@ -1,8 +1,32 @@
 import React, {Component} from 'react';
-import {View, Text, StyleSheet, Button, TextInput, FlatList, ScrollView} from 'react-native';
+import {View, Text, StyleSheet, Button, TextInput, FlatList, ScrollView, Image} from 'react-native';
+import * as ImagePicker from "react-native-image-picker";
+import RNFetchBlob from 'react-native-fetch-blob';
+
+//Para a biblioteca RNFetch
+window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest;
+window.Blob = RNFetchBlob.polyfill.Blob;
+
+const Fetch = RNFetchBlob.polyfill.Fetch
+// replace built-in fetch
+window.fetch = new Fetch({
+    // enable this option so that the response data conversion handled automatically
+    auto : true,
+    // when receiving response data, the module will match its Content-Type header
+    // with strings in this array. If it contains any one of string in this array, 
+    // the response body will be considered as binary data and the data will be stored
+    // in file system instead of in memory.
+    // By default, it only store response data to file system when Content-Type 
+    // contains string `application/octet`.
+    binaryContentTypes : [
+        'image/',
+        'video/',
+        'audio/',
+        'foo/',
+    ]
+}).build()
 
 import firebase from './Conexao';
-
 import SistemaModels from './SistemaModels';
 
 export default class PrimeiroProjeto extends Component{
@@ -18,11 +42,16 @@ export default class PrimeiroProjeto extends Component{
 			senha: '',
 			uid: '',
 			addItemTxt: '',
-			lista: ''
+			lista: '',
+			foto: null
 		};
 
 		//O ideal é colocar todo o código do firebase em um arquivo separado, chamando só o método dele
 		SistemaModels.sair();
+
+		/*Trabalhando com firebase storage*/
+		let images = firebase.storage().ref().child('assets').child('images');
+		let files = images.parent.child('files');
 
 		//let firebaseConfig = Conexao.viewDetails().con;
 
@@ -43,8 +72,9 @@ export default class PrimeiroProjeto extends Component{
   this.inserirUsuario = this.inserirUsuario.bind(this);
   this.cadastrar = this.cadastrar.bind(this);
   this.logar = this.logar.bind(this);
-
   this.add = this.add.bind(this);
+
+  this.pegarFoto = this.pegarFoto.bind(this);
 
   //firebase.auth().signOut();
 
@@ -176,6 +206,43 @@ cadastrar(){
 			}
 		}
 
+		pegarFoto(){
+			
+			//ImagePicker.launchCamera para abrir a câmera
+			//ImagePicker.launchImageLibrary para abrir a galeria
+			//ImagePicker.showImagePicker para perguntar o usuário (não funcionando...)
+			
+			ImagePicker.launchImageLibrary(null, (r) => {
+				
+				if(r.uri){
+					//IOSs possuem esse file://
+					let uri = r.uri.replace('file://', '');
+					//alert(uri);
+					let imagem = firebase.storage().ref().child('imagem.jpg');
+					let mime = 'image/jpeg';
+
+					RNFetchBlob.fs.readFile(uri, 'base64')
+					.then((data) => {
+						return RNFetchBlob.polyfill.Blob.build(data, {type:mime+';Base64'});
+					})
+					.then((blob) => {
+						imagem.put(blob, {contentType:mime})
+						.then(() => {
+							blob.close();
+
+							alert("Terminou");
+
+							let url = imagem.getDownloadURL();
+						})
+						.catch((error) => {
+							alert(error.code);
+						})
+					});
+				}
+			})
+			
+		}
+
 		render(){
 
 			return (
@@ -192,6 +259,10 @@ cadastrar(){
 
 				<Button title="Inserir usuário" onPress={this.inserirUsuario} />
 
+				
+				<Button title="Carregar foto" onPress={this.pegarFoto} />
+				<Image source={this.state.foto} style={styles.foto} />
+				
 				<Text>Usuários</Text>
 
 				<FlatList
@@ -266,5 +337,9 @@ cadastrar(){
 		},
 		lista:{
 			margin: 30
+		},
+		foto:{
+			width: 300,
+			height: 300
 		}
 	});

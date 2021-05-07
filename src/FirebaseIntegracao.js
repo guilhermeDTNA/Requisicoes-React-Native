@@ -38,14 +38,96 @@ export default class FirebaseIntegracao extends Component{
             formNome: '',
             formEmail: '',
             formSenha: '',
-            lista: []
+            userUid: 0,
+            formPct: '',
+            lista: [],
         }
 
         this.cadastrar = this.cadastrar.bind(this);
+        this.carregarFoto = this.carregarFoto.bind(this);
+        this.saveAvatar = this.saveAvatar.bind(this);
+        this.saveUser = this.saveUser.bind(this);
+    }
+
+    saveAvatar(){
+        let uri = this.state.formAvatar.uri.replace('file://', '');
+        let avatar = firebase.storage().ref().child('usuarios').child(this.state.userUid+'.jpg');
+        let mime = 'image/jpeg';
+
+        RNFetchBlob.fs.readFile(uri, 'base64')
+        .then((data) => {
+            return RNFetchBlob.polyfill.Blob.build(data, {type:mime+';Base64'});
+        })
+        .then((blob) => {
+            avatar.put(blob, {ContentType: mime})
+            .on('state_changed', (snapshot) => {
+                let pct = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+
+                this.setState({
+                    formPct: pct+'%'
+                });
+            }, (error) => {
+                alert(error.code);
+            },
+            () => {
+                this.setState({
+                    formAvatar: null,
+                    formNome: '',
+                    formEmail: '',
+                    formSenha: '',
+                    formPct: '',
+                    userUid: 0
+                });
+
+                firebase.auth().signOut();
+
+                alert("Usuário inserido com sucesso!");
+            });
+        });
+    }
+
+    saveUser(){
+        if(this.state.userUid != 0){
+            firebase.database().ref('usuarios').child(this.state.userUid).set({
+                name: this.state.formNome
+            });
+        }
     }
 
     cadastrar(){
+        if (this.state.formEmail != '' && 
+            this.state.formNome != '' && 
+            this.state.formSenha != '' && 
+            this.state.formAvatar != null) {
 
+            firebase.auth().onAuthStateChanged((user) => {
+                if(user){
+                    this.setState = {
+                        userUid: user.uid
+                    }
+
+                    this.saveAvatar();
+                    this.saveUser();
+                }
+            })
+
+        firebase.auth().createUserWithEmailAndPassword(
+            this.state.formEmail, 
+            this.state.formSenha
+            ).catch((error) => {
+                alert(error.code);
+            });
+        }
+    }
+
+    carregarFoto(){
+        ImagePicker.launchImageLibrary({}, (r) => {
+            if(r.uri){
+                let state = this.state;
+                state.formAvatar = {uri:r.uri};
+                this.setState(state);
+            }
+        });
     }
 
     render(){
@@ -53,43 +135,47 @@ export default class FirebaseIntegracao extends Component{
 
             <View style={styles.container}>
             <View style={styles.cadastroArea}>
-                <Text>Cadastre um novo usuário</Text>
-                <View style={styles.form}>
-                    <Image source={this.state.formAvatar} style={styles.formAvatar} />
+            <Text>Cadastre um novo usuário</Text>
+            <View style={styles.form}>
+            <View style={styles.formInfo}>
 
-                    <View style={styles.formInfo}>
-                        <TextInput style={styles.input} placeholder="Digite o nome" value={this.state.formNome} onChangeText={(formNome) => this.setState({formNome})} />
-                        <TextInput style={styles.input} placeholder="Digite o e-mail" value={this.state.formEmail} onChangeText={(formEmail) => this.setState({formEmail})} />
-                        <TextInput style={styles.input} secureTextEntry={true} placeholder="Digite o senha" value={this.state.formSenha} onChangeText={(formSenha) => this.setState({formSenha})} />
+            <Image source={this.state.formAvatar} style={styles.formAvatar} />
+            <Button title="Carregar" onPress={this.carregarFoto}></Button>
+            <Text>{this.state.formPct}</Text>
+            </View>
+            <View style={styles.formInfo}>
+            <TextInput style={styles.input} placeholder="Digite o nome" value={this.state.formNome} onChangeText={(formNome) => this.setState({formNome})} />
+            <TextInput style={styles.input} placeholder="Digite o e-mail" value={this.state.formEmail} onChangeText={(formEmail) => this.setState({formEmail})} />
+            <TextInput style={styles.input} secureTextEntry={true} placeholder="Digite o senha" value={this.state.formSenha} onChangeText={(formSenha) => this.setState({formSenha})} />
 
-                    </View>
-                    </View>
+            </View>
+            </View>
 
-                    <Button title="Cadastrar" onPress={this.cadastrar} />
-                </View>
+            <Button title="Cadastrar" onPress={this.cadastrar} />
+            </View>
             
-                <View style={styles.listaArea}>
-                    <FlatList 
-                    data={this.state.lista}
-                    renderItem={(item) => {
-                        return(
-                            <View style={styles.itemArea}>
-                                <Image source={item.avatar} style={styles.itemAvatar} />
-                                <View style={styles.itemInfo}>
-                                    <Text>{item.nome}</Text>
-                                    <Text>{item.email}</Text>
-                                </View>
-                            </View>
-                           );
-                    }}
-                    />
+            <View style={styles.listaArea}>
+            <FlatList 
+            data={this.state.lista}
+            renderItem={(item) => {
+                return(
+                    <View style={styles.itemArea}>
+                    <Image source={item.avatar} style={styles.itemAvatar} />
+                    <View style={styles.itemInfo}>
+                    <Text>{item.nome}</Text>
+                    <Text>{item.email}</Text>
+                    </View>
+                    </View>
+                    );
+            }}
+            />
 
 
 
-                </View>
+            </View>
 
-                <Button style={styles.botaoSair} title="Sair" onPress={SistemaModels.sair} />
-                
+            <Button style={styles.botaoSair} title="Sair" onPress={SistemaModels.sair} />
+
             
             </View>
 

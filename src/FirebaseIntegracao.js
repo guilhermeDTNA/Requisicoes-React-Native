@@ -5,6 +5,7 @@ import RNFetchBlob from 'react-native-fetch-blob';
 
 import firebase from './Conexao';
 import SistemaModels from './SistemaModels';
+import Usuario from './Usuario';
 
 //Para a biblioteca RNFetch
 window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest;
@@ -47,6 +48,22 @@ export default class FirebaseIntegracao extends Component{
         this.carregarFoto = this.carregarFoto.bind(this);
         this.saveAvatar = this.saveAvatar.bind(this);
         this.saveUser = this.saveUser.bind(this);
+
+        firebase.auth().signOut();
+
+        firebase.database().ref('usuarios').on('value', (snapshot) => {
+            let state = this.state;
+            state.lista = [];
+            snapshot.forEach((child) => {
+                state.lista.push({
+                    key: child.key,
+                    nome: child.val().name,
+                    email: child.val().email
+                });
+            });
+
+            this.setState(state);
+        })
     }
 
     saveAvatar(){
@@ -70,7 +87,19 @@ export default class FirebaseIntegracao extends Component{
                 alert(error.code);
             },
             () => {
-                this.setState({
+                this.saveUser();
+            });
+        });
+    }
+
+    saveUser(){
+        if(this.state.userUid != 0){
+            firebase.database().ref('usuarios').child(this.state.userUid).set({
+                name: this.state.formNome,
+                email: this.state.formEmail
+            });
+
+            this.setState({
                     formAvatar: null,
                     formNome: '',
                     formEmail: '',
@@ -82,15 +111,6 @@ export default class FirebaseIntegracao extends Component{
                 firebase.auth().signOut();
 
                 alert("Usuário inserido com sucesso!");
-            });
-        });
-    }
-
-    saveUser(){
-        if(this.state.userUid != 0){
-            firebase.database().ref('usuarios').child(this.state.userUid).set({
-                name: this.state.formNome
-            });
         }
     }
 
@@ -107,7 +127,6 @@ export default class FirebaseIntegracao extends Component{
                     }
 
                     this.saveAvatar();
-                    this.saveUser();
                 }
             })
 
@@ -121,7 +140,7 @@ export default class FirebaseIntegracao extends Component{
     }
 
     carregarFoto(){
-        ImagePicker.launchImageLibrary({}, (r) => {
+        ImagePicker.launchImageLibrary(null, (r) => {
             if(r.uri){
                 let state = this.state;
                 state.formAvatar = {uri:r.uri};
@@ -157,17 +176,7 @@ export default class FirebaseIntegracao extends Component{
             <View style={styles.listaArea}>
             <FlatList 
             data={this.state.lista}
-            renderItem={(item) => {
-                return(
-                    <View style={styles.itemArea}>
-                    <Image source={item.avatar} style={styles.itemAvatar} />
-                    <View style={styles.itemInfo}>
-                    <Text>{item.nome}</Text>
-                    <Text>{item.email}</Text>
-                    </View>
-                    </View>
-                    );
-            }}
+            renderItem={({item}) => <Usuario data={item} />}
             />
 
 
@@ -218,25 +227,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#EEEEEE',
         margin: 10
     },
-    itemArea:{
-        height: 100,
-        flex: 1,
-        flexDirection: 'row'
-    },
-    itemAvatar:{
-        width: 80,
-        height: 80,
-        margin: 10
-    },
-    itemInfo:{
-        flex: 1,
-        flexDirection: 'column'
-    },
-
-
 
     botaoSair:{
         paddingBottom:0
-    },
+    }
     
 })
